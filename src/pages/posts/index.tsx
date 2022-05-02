@@ -1,12 +1,22 @@
 import Head from 'next/head';
+import { RichText } from 'prismic-dom';
+
+import { getPrismicClient } from '../../services/prismic';
+
 import styles from './styles.module.scss';
-import * as prismic from '@prismicio/client';
-// import { GetStaticProps } from 'next';
-// import { endpoint } from '../../services/prismic';
 
+type Post ={
+  slug: string;
+  title: string;
+  excerpt: string;
+  updatedAt: string;
+}
 
+interface PostProps {
+  posts: Post[]
+}
 
-export default function Posts(){
+export default function Posts({posts} :PostProps){
     return (
       <>
         <Head>
@@ -15,42 +25,16 @@ export default function Posts(){
 
         <main className={styles.container}>
           <div className={styles.posts}>
-            <a href="">
-              <time>12 de março de 2022</time>
-              <strong>Creating a Monorepo with Lerna & Yarn Workspaces</strong>
-              <p>
-                In this guide, you will learn how to create a Monorepo to manage
-                multiple packages with a shared build, test, and release
-                process.
-              </p>
-            </a>
-            <a href="">
-              <time>12 de março de 2022</time>
-              <strong>Creating a Monorepo with Lerna & Yarn Workspaces</strong>
-              <p>
-                In this guide, you will learn how to create a Monorepo to manage
-                multiple packages with a shared build, test, and release
-                process.
-              </p>
-            </a>
-            <a href="">
-              <time>12 de março de 2022</time>
-              <strong>Creating a Monorepo with Lerna & Yarn Workspaces</strong>
-              <p>
-                In this guide, you will learn how to create a Monorepo to manage
-                multiple packages with a shared build, test, and release
-                process.
-              </p>
-            </a>
-            <a href="">
-              <time>12 de março de 2022</time>
-              <strong>Creating a Monorepo with Lerna & Yarn Workspaces</strong>
-              <p>
-                In this guide, you will learn how to create a Monorepo to manage
-                multiple packages with a shared build, test, and release
-                process.
-              </p>
-            </a>
+            {posts.map(post => (
+              <a key={post.slug} href="#">
+                <time>{post.updatedAt}</time>
+                <strong>{post.title}</strong>
+                <p>
+                 {post.excerpt}
+                </p>
+              </a>
+            ))}
+           
           </div>
         </main>
       </>
@@ -58,20 +42,27 @@ export default function Posts(){
 }
 
     
-export async function getServerSideProps({ previewData }) {
-  const client = prismic.createClient(
-    process.env.PRISMIC_ENDPOINT,
-    (process.env.PRISMIC_ACCESS_TOKEN,
-    {
-      ...previewData
-    })
-  );
+export async function getServerSideProps() {
+  const prismic = getPrismicClient()
 
-  const posts = await client.getAllByType("post", {
+  const response = await prismic.getByType("pos", {
     pageSize: 100,
   });
 
-  console.log(posts);
+  const posts = response.results.map(post =>{
+    return {
+      slug: post.uid,
+      title: RichText.asText(post.data.title),
+      excerpt: post.data.conent.find(conent => conent.type === "paragraph")?.text ?? '',
+      updatedAt: new Date(post.last_publication_date).toLocaleDateString(
+        'pt-BR', {day: '2-digit',
+         month: 'long', 
+         year: 'numeric'
+        })
+      }
+    });
+
+  console.log(JSON.stringify(response, null, 2));
   
   return {
     props: { posts },
