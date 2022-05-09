@@ -1,5 +1,6 @@
 import Head from 'next/head';
-import { RichText } from 'prismic-dom';
+import Link from 'next/link';
+import {  RichText } from 'prismic-dom';
 
 import { getPrismicClient } from '../../services/prismic';
 
@@ -26,6 +27,8 @@ export default function Posts({posts} :PostProps){
         <main className={styles.container}>
           <div className={styles.posts}>
             {posts.map(post => (
+              // eslint-disable-next-line react/jsx-key
+              <Link href={`/posts/preview/${post.slug}`}>
               <a key={post.slug} href="#">
                 <time>{post.updatedAt}</time>
                 <strong>{post.title}</strong>
@@ -33,8 +36,8 @@ export default function Posts({posts} :PostProps){
                  {post.excerpt}
                 </p>
               </a>
+              </Link>
             ))}
-           
           </div>
         </main>
       </>
